@@ -17,13 +17,44 @@
     - libpq-dev
     - python-psycopg2
 
-- name: download nodejs, erlang and elixir
-  get_url:
-    url: "{{ item }}"
-    dest: "{{ download_path }}"
-  with_items:
-    - "{{ node_src }}"
-    - "{{ erlang_src }}"
-    - "{{ elixir_src }}"
+- name: check if node source is downloaded
+  shell: ls /tmp/node-v{{ node_version }}-{{ node_platform }}.tar.xz
+  register: node_downloaded
+  ignore_errors: yes
 
-- debug: msg="USername {{ username }}"
+- name: check if elixir source is downloaded
+  shell: ls /tmp/otp_src_{{ erlang_version }}.tar.gz
+  register: erlang_downloaded
+  ignore_errors: yes
+
+- name: check if elixir source is downloaded
+  shell: ls /tmp/elixir-{{ elixir_version }}.tar.gz
+  register: elixir_downloaded
+  ignore_errors: yes
+
+- name: download node src
+  get_url:
+    url: "{{ node_src }}"
+    dest: "{{ download_path }}"
+  when: node_downloaded|failed
+
+- name: download erlang src
+  get_url:
+    url: "{{ erlang_src }}"
+    dest: "{{ download_path }}"
+  when: erlang_downloaded|failed
+
+- name: download elixir src
+  get_url:
+    url: "{{ elixir_src }}"
+    dest: "{{ download_path }}"
+  when: elixir_downloaded|failed
+
+- debug: msg="debug {{ elixir_downloaded }}"
+  when: elixir_downloaded|failed
+
+- debug: msg="debug {{ erlang_downloaded }}"
+  when: erlang_downloaded|failed
+
+- debug: msg="debug {{ node_downloaded }}"
+  when: node_downloaded|failed
