@@ -1,0 +1,29 @@
+---
+# tasks
+- name: install essential packages
+  apt: pkg={{ item}} update_cache=yes cache_valid_time=3600
+  become: true
+  become_method: sudo
+  with_items:
+    - build-essential
+    - libncurses5-dev
+    - libssl-dev
+    - fop
+    - xsltproc
+    - unixodbc-dev
+    - postgresql
+    - postgresql-contrib
+    - npm
+    - libpq-dev
+    - python-psycopg2
+
+- name: download nodejs, erlang and elixir
+  get_url:
+    url: "{{ item }}"
+    dest: "{{ download_path }}"
+  with_items:
+    - "{{ node_src }}"
+    - "{{ erlang_src }}"
+    - "{{ elixir_src }}"
+
+- debug: msg="USername {{ username }}"
