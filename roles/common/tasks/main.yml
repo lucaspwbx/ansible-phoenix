@@ -22,7 +22,7 @@
   register: node_downloaded
   ignore_errors: yes
 
-- name: check if elixir source is downloaded
+- name: check if erlang source is downloaded
   shell: ls /tmp/otp_src_{{ erlang_version }}.tar.gz
   register: erlang_downloaded
   ignore_errors: yes
@@ -31,6 +31,12 @@
   shell: ls /tmp/elixir-{{ elixir_version }}.tar.gz
   register: elixir_downloaded
   ignore_errors: yes
+
+- debug: msg="debug {{ elixir_downloaded }}"
+
+- debug: msg="debug {{ erlang_downloaded }}"
+
+- debug: msg="debug {{ node_downloaded }}"
 
 - name: download node src
   get_url:
@@ -50,11 +56,41 @@
     dest: "{{ download_path }}"
   when: elixir_downloaded|failed
 
-- debug: msg="debug {{ elixir_downloaded }}"
-  when: elixir_downloaded|failed
+- name: unarchive node
+  unarchive:
+    src: /tmp/node-v{{ node_version }}-{{ node_platform }}.tar.xz
+    dest: /tmp
+  register: node_unarchived
+  ignore_errors: true
 
-- debug: msg="debug {{ erlang_downloaded }}"
-  when: erlang_downloaded|failed
+- name: unarchive erlang
+  unarchive:
+    src: /tmp/otp_src_{{ erlang_version }}.tar.gz
+    dest: /tmp
+  register: erlang_unarchived
+  ignore_errors: true
 
-- debug: msg="debug {{ node_downloaded }}"
-  when: node_downloaded|failed
+- name: unarchive elixir
+  unarchive:
+    src: /tmp/elixir-{{ elixir_version }}.tar.gz
+    dest: /tmp
+  register: elixir_unarchived
+  ignore_errors: true
+
+- name: add nodejs symlinks
+  become: true
+  become_method: sudo
+  when: node_unarchived|success
+  register: node_symlinked
+  file:
+    src: /tmp/node-v{{ node_version }}-{{ node_platform }}/bin/{{ item }}
+    dest: /usr/bin/{{ item }}
+    state: link
+    force: yes
+    with_items:
+      - node
+      - npm
+
+- name: update npm
+  shell: npm install npm@latest -g
+  when: node_symlinked|success
