@@ -146,3 +146,26 @@
   become: true
   become_method: sudo
 
+- name: ensure postgresql is started
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: create role for user
+  postgresql_user:
+    name: "{{ database_user }}"
+    password: "{{ database_pass }}"
+  become: true
+  become_user: postgres
+
+- name: create db
+  postgresql_db:
+    name: "{{ database_name }}"
+    owner: "{{ database_user }}"
+    lc_collate: "{{ locale }}"
+    lc_ctype: "{{ locale }}"
+    encoding: UTF-8
+    template: template0
+  become: true
+  become_user: postgres
