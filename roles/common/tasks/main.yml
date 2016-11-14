@@ -100,10 +100,6 @@
   register: node_symlinked
   when: node_unarchived|success
 
-- name: update npm
-  shell: npm install npm@latest -g
-  when: node_symlinked|success
-
 - name: check if erlang is installed
   shell: which erl
   register: erlang_installed
