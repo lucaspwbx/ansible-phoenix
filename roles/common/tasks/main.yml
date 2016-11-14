@@ -1,7 +1,7 @@
 ---
 # tasks
 - name: install essential packages
-  apt: pkg={{ item}} update_cache=yes cache_valid_time=3600
+  apt: pkg={{ item }} update_cache=yes cache_valid_time=3600
   become: true
   become_method: sudo
   with_items:
@@ -23,7 +23,7 @@
   register: node_downloaded
   ignore_errors: yes
 
-- name: check if elixir source is downloaded
+- name: check if erlang source is downloaded
   shell: ls /tmp/otp_src_{{ erlang_version }}.tar.gz
   register: erlang_downloaded
   ignore_errors: yes
@@ -203,3 +203,58 @@
     - mix local.rebar --force
     - mix deps.get --only prod
     - mix deps.compile
+
+- name: mix compile
+  shell: mix compile
+  args:
+    chdir: "{{ app_path }}"
+  environment:
+    MIX_ENV: prod
+    LC_ALL: "{{ locale }}"
+    LANG: "{{ locale }}"
+    LANGUAGE: "{{ locale }}"
+
+- name: mix ecto.migrate
+  shell: mix ecto.migrate
+  args:
+    chdir: "{{ app_path }}"
+  environment:
+    DB_USERNAME: "{{ database_user }}"
+    DB_PASSWORD: "{{ database_pass }}"
+    MIX_ENV: prod
+    LC_ALL: "{{ locale }}"
+    LANG: "{{ locale }}"
+    LANGUAGE: "{{ locale }}"
+
+- name: npm install
+  shell: npm install
+  args:
+    chdir: "{{ app_path }}"
+
+- name: brunch build production
+  shell: .{{ brunch_path }}/brunch b -p
+  args:
+    chdir: "{{ app_path }}"
+
+- name: mix phoenix digest & mix release --env=prod
+  shell: "{{ item }}"
+  args:
+    chdir: "{{ app_path }}"
+  environment:
+    MIX_ENV: prod
+    LC_ALL: "{{ locale }}"
+    LANG: "{{ locale }}"
+    LANGUAGE: "{{ locale }}"
+  with_items:
+    - mix phoenix.digest
+    - mix release --env=prod
+
+- name: start app daemon
+  shell: ./{{ app_name }} start
+  args:
+    chdir: "{{ release_path }}"
+  environment:
+    PORT: "{{ app_port }}"
+    LC_ALL: "{{ locale }}"
+    LANG: "{{ locale }}"
+    LANGUAGE: "{{ locale }}"
