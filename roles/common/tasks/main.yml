@@ -16,6 +16,7 @@
     - npm
     - libpq-dev
     - python-psycopg2
+    - git
 
 - name: check if node source is downloaded
   shell: ls /tmp/node-v{{ node_version }}-{{ node_platform }}.tar.xz
@@ -169,3 +170,36 @@
     template: template0
   become: true
   become_user: postgres
+
+- name: add public key
+  copy:
+    src: "{{ local_public_key }}"
+    dest: "{{ remote_public_key }}"
+    mode: 0644
+
+- name: add private key
+  copy:
+    src: "{{ local_private_key }}"
+    dest: "{{ remote_private_key }}"
+    mode: 0600
+
+- name: checkout repo
+  git:
+    repo: "{{ app_repo }}"
+    dest: "{{ app_path }}"
+    accept_hostkey: yes
+    key_file: "{{ remote_private_key }}"
+
+- name: mix deps.get && mix deps.compile
+  shell: "{{ item }}"
+  args:
+    chdir: "{{ app_path }}"
+  environment:
+    LC_ALL: "{{ locale }}"
+    LANG: "{{ locale }}"
+    LANGUAGE: "{{ locale }}"
+  with_items:
+    - mix local.hex --force
+    - mix local.rebar --force
+    - mix deps.get --only prod
+    - mix deps.compile
