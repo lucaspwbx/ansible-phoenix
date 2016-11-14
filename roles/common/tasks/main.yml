@@ -84,7 +84,52 @@
     - npm
   register: node_symlinked
 
-- debug: msg="debug {{ node_symlinked|success }}"
-
 - name: update npm
   shell: npm install npm@latest -g
+
+- name: check if erlang is installed
+  shell: which erl
+  register: erlang_installed
+  ignore_errors: true
+
+- name: build erlang
+  become: true
+  become_method: sudo
+  shell: "{{ item }}"
+  args:
+    chdir: /tmp/otp_src_{{ erlang_version }}
+  with_items:
+    - ./configure --prefix=/usr/local
+    - make
+    - make install
+  when: erlang_installed|failed
+
+- name: check if elixir is installed
+  shell: elixir -v
+  register: elixir_installed
+  ignore_errors: true
+
+- name: build elixir
+  shell: make
+  become: true
+  become_method: sudo
+  args:
+    chdir: /tmp/elixir-{{ elixir_version }}
+  environment:
+    LC_ALL: "{{ locale }}"
+    LANG: "{{ locale }}"
+    LANGUAGE: "{{ locale }}"
+  when: elixir_installed|failed
+
+- name: add elixir and mix symlinks 
+  file:
+    src: /tmp/elixir-{{ elixir_version }}/bin/{{ item }}
+    dest: /usr/bin/{{ item }}
+    state: link
+    force: yes
+  with_items:
+    - elixir
+    - mix
+  become: true
+  become_method: sudo
+
