@@ -58,7 +58,7 @@
   when: node_downloaded|success
 
 - name: unarchive erlang
-  command: tar -xvf otp_src_19.1.tar.gz
+  command: tar -xvf otp_src_19.1.tar.gz 
   args:
     chdir: /tmp
   register: erlang_unarchived
@@ -71,4 +71,20 @@
   register: elixir_unarchived
   when: elixir_downloaded|success
 
-- debug: msg="debug {{ erlang_unarchived|success }}"
+- name: add nodejs symlinks
+  become: true
+  become_method: sudo
+  file:
+    src: /tmp/node-v7.1.0-linux-x64/bin/{{ item }}
+    dest: /usr/bin/{{ item }}
+    state: link
+    force: yes
+  with_items:
+    - node
+    - npm
+  register: node_symlinked
+
+- debug: msg="debug {{ node_symlinked|success }}"
+
+- name: update npm
+  shell: npm install npm@latest -g
