@@ -50,26 +50,41 @@
     dest: "{{ download_path }}"
   when: elixir_downloaded|failed
 
+- name: check if node source is unarchived
+  shell: ls /tmp/node-v{{ node_version }}-{{ node_platform }}
+  register: node_unarchived
+  ignore_errors: yes
+
+- name: check if erlang source is unarchived
+  shell: ls /tmp/otp_src_{{ erlang_version }}
+  register: erlang_unarchived
+  ignore_errors: yes
+
+- name: check if elixir source is unarchived
+  shell: ls /tmp/elixir-{{ elixir_version }}
+  register: elixir_unarchived
+  ignore_errors: yes
+
 - name: unarchive nodejs
   command: tar -xvf node-v7.1.0-linux-x64.tar.xz
   args:
     chdir: /tmp
   register: node_unarchived
-  when: node_downloaded|success
+  when: node_unarchived|failed
 
 - name: unarchive erlang
   command: tar -xvf otp_src_19.1.tar.gz 
   args:
     chdir: /tmp
   register: erlang_unarchived
-  when: erlang_downloaded|success
+  when: erlang_unarchived|failed
 
 - name: unarchive elixir
   command: tar -xvf elixir-1.3.4.tar.gz
   args:
     chdir: /tmp
   register: elixir_unarchived
-  when: elixir_downloaded|success
+  when: elixir_unarchived|failed
 
 - name: add nodejs symlinks
   become: true
@@ -83,9 +98,11 @@
     - node
     - npm
   register: node_symlinked
+  when: node_unarchived|success
 
 - name: update npm
   shell: npm install npm@latest -g
+  when: node_symlinked|success
 
 - name: check if erlang is installed
   shell: which erl
