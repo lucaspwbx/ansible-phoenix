@@ -19,17 +19,17 @@
     - git
 
 - name: check if node source is downloaded
-  shell: ls /tmp/node-v{{ node_version }}-{{ node_platform }}.tar.xz
+  shell: ls {{ node_downloaded }}
   register: node_downloaded
   ignore_errors: yes
 
 - name: check if erlang source is downloaded
-  shell: ls /tmp/otp_src_{{ erlang_version }}.tar.gz
+  shell: ls {{ erlang_downloaded }}
   register: erlang_downloaded
   ignore_errors: yes
 
 - name: check if elixir source is downloaded
-  shell: ls /tmp/elixir-{{ elixir_version }}.tar.gz
+  shell: ls {{ elixir_downloaded }}
   register: elixir_downloaded
   ignore_errors: yes
 
@@ -52,7 +52,7 @@
   when: elixir_downloaded|failed
 
 - name: check if node source is unarchived
-  shell: ls /tmp/node-v{{ node_version }}-{{ node_platform }}
+  shell: ls /tmp/node-v{{ node_version }}-{{ node_architecture }}
   register: node_unarchived
   ignore_errors: yes
 
