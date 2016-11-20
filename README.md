@@ -2,6 +2,8 @@
 Database username and password must be in the following environment variables:
 - DB_USERNAME
 - DB_PASSWORD
+Port also must be in a enviroment variable:
+- PORT
 
 ```
 vagrant up
